@@ -35,8 +35,40 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.btnScan).setOnClickListener(v -> launchScanner());
         findViewById(R.id.btnManual).setOnClickListener(v -> showManualEntry());
+        findViewById(R.id.btnBankSettings).setOnClickListener(v -> showBankMenuSettings());
 
         bindSteps();
+    }
+
+    /**
+     * Lets the user correct the *99# option numbers. Banks number their menus
+     * differently — one real HDFC menu lists 1, 3, 4, 5 and skips 2 — so these
+     * cannot be safely hard-coded for everyone.
+     */
+    private void showBankMenuSettings() {
+        View form = getLayoutInflater().inflate(R.layout.dialog_bank_menu, null);
+        EditText etSend = form.findViewById(R.id.etSendMoney);
+        EditText etMobile = form.findViewById(R.id.etByMobile);
+        EditText etUpi = form.findViewById(R.id.etByUpiId);
+
+        UssdCode current = new UssdCode(this);
+        etSend.setText(current.getSendMoney());
+        etMobile.setText(current.getByMobile());
+        etUpi.setText(current.getByUpiId());
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.bank_menu_title)
+                .setView(form)
+                .setPositiveButton(R.string.save, (d, w) -> {
+                    String s = etSend.getText().toString().trim();
+                    String m = etMobile.getText().toString().trim();
+                    String u = etUpi.getText().toString().trim();
+                    if (s.isEmpty() || m.isEmpty() || u.isEmpty()) return;
+                    UssdCode.save(this, s, m, u);
+                    Toast.makeText(this, R.string.bank_menu_saved, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
     }
 
     private void bindSteps() {

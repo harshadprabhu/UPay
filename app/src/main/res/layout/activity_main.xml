@@ -211,6 +211,25 @@
                 android:lineSpacingMultiplier="1.15" />
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/btnBankSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/btn_ghost"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingVertical="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/bank_settings"
+                android:textColor="@color/cream"
+                android:textSize="14sp" />
+        </LinearLayout>
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -1,36 +1,29 @@
 package com.urgentpay.app;
 
 import android.Manifest;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.telephony.TelephonyManager;
-import android.text.TextUtils;
-import android.widget.EditText;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 /**
- * Runs the *99# rail and renders the bank's replies inside the app instead of
- * the raw system overlay, using {@link TelephonyManager#sendUssdRequest}
- * (Android 8 / API 26+).
+ * Launches the payment by dialling a *99# string that already carries the menu
+ * choices, the payee and the amount — so the bank asks only for the UPI PIN.
  *
- * Honest limitations, surfaced to the user rather than hidden:
- *  - sendUssdRequest is a single request/response call. Deep interactive menu
- *    navigation and, critically, UPI PIN entry are NOT done here — for those we
- *    hand off to the phone's secure dialer (the only compliant place for a PIN).
- *  - Some devices/carriers don't support programmatic USSD. We detect that and
- *    fall back to the secure dialer automatically.
+ * Nothing here touches another app's screen: UPay builds a dial string and
+ * hands it to the dialler, exactly as if the user had typed it themselves. The
+ * PIN is entered on the phone's own USSD screen and is never seen by UPay.
  */
 public class UssdSessionActivity extends AppCompatActivity {
 
@@ -39,109 +32,85 @@ public class UssdSessionActivity extends AppCompatActivity {
 
     private static final int REQ_CALL = 71;
 
-    private TextView tvStatus;
-    private TextView tvResponse;
-    private EditText etReply;
-
-    private String vpa;
+    private String payee;
     private String amount;
+    private UssdCode.Dial dial;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ussd);
 
-        vpa = getIntent().getStringExtra(EXTRA_VPA);
+        payee = getIntent().getStringExtra(EXTRA_VPA);
         amount = getIntent().getStringExtra(EXTRA_AMOUNT);
 
-        tvStatus = findViewById(R.id.tvUssdStatus);
-        tvResponse = findViewById(R.id.tvUssdResponse);
-        etReply = findViewById(R.id.etReply);
+        dial = new UssdCode(this).build(payee, amount);
 
-        findViewById(R.id.btnSendReply).setOnClickListener(v -> sendReply());
-        findViewById(R.id.btnSecureDialer).setOnClickListener(v -> openSecureDialer());
+        ((TextView) findViewById(R.id.tvSummaryPayee)).setText(payee);
+        ((TextView) findViewById(R.id.tvSummaryAmount)).setText("₹" + amount);
+        ((TextView) findViewById(R.id.tvDialCode)).setText(dial.code);
 
-        append("Recipient: " + vpa + "\nAmount: ₹" + amount + "\n");
+        TextView tvWhatsLeft = findViewById(R.id.tvWhatsLeft);
+        View clipboardCard = findViewById(R.id.clipboardCard);
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            // Programmatic USSD needs API 26. Older devices go straight to dialer.
-            tvStatus.setText(R.string.ussd_unsupported);
-            openSecureDialer();
-            return;
-        }
-        ensurePermissionThenStart();
-    }
-
-    private void ensurePermissionThenStart() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
-                == PackageManager.PERMISSION_GRANTED) {
-            runUssd(getString(R.string.ussd_code));
+        if (dial.fullyPrefilled) {
+            tvWhatsLeft.setText(R.string.only_pin_left);
+            clipboardCard.setVisibility(View.GONE);
+        } else if (dial.clipboard != null) {
+            // Payee is a UPI ID — copy it so it's one long-press to paste.
+            copyToClipboard(dial.clipboard);
+            tvWhatsLeft.setText(R.string.paste_then_pin);
+            clipboardCard.setVisibility(View.VISIBLE);
+            ((TextView) findViewById(R.id.tvClipboardValue)).setText(dial.clipboard);
         } else {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CALL_PHONE}, REQ_CALL);
+            tvWhatsLeft.setText(R.string.answer_remaining);
+            clipboardCard.setVisibility(View.GONE);
         }
+
+        findViewById(R.id.btnDial).setOnClickListener(v -> placeCall());
+        findViewById(R.id.btnCopyAgain).setOnClickListener(v -> {
+            copyToClipboard(dial.clipboard);
+            Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show();
+        });
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private void runUssd(String code) {
-        TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-        if (tm == null) {
-            fallback();
-            return;
+    private void copyToClipboard(String value) {
+        if (value == null) return;
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm != null) {
+            cm.setPrimaryClip(ClipData.newPlainText("UPI ID", value));
         }
-        tvStatus.setText(R.string.ussd_dialing);
-        try {
-            tm.sendUssdRequest(code, new TelephonyManager.UssdResponseCallback() {
-                @Override
-                public void onReceiveUssdResponse(TelephonyManager t, String request, CharSequence response) {
-                    tvStatus.setText(R.string.offline_session);
-                    append("\n" + request + " →\n" + response + "\n");
-                }
-
-                @Override
-                public void onReceiveUssdResponseFailed(TelephonyManager t, String request, int failureCode) {
-                    tvStatus.setText(R.string.ussd_failed);
-                    append("\n[Session ended by network]\n");
-                }
-            }, new Handler(Looper.getMainLooper()));
-        } catch (SecurityException e) {
-            fallback();
-        }
-    }
-
-    private void sendReply() {
-        String reply = etReply.getText().toString().trim();
-        if (TextUtils.isEmpty(reply)) return;
-        etReply.setText("");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // A menu selection is itself a USSD string on the *99# tree.
-            runUssd(reply);
-        } else {
-            openSecureDialer();
-        }
-    }
-
-    private void fallback() {
-        Toast.makeText(this, R.string.ussd_unsupported, Toast.LENGTH_LONG).show();
-        openSecureDialer();
     }
 
     /**
-     * Hand off to the phone's dialer with *99# prefilled. This is where the
-     * UPI PIN is entered — on the secure, bank-owned screen, never in our UI.
+     * Dials the prepared string. ACTION_CALL runs it straight away; without the
+     * permission we fall back to ACTION_DIAL, which pre-fills the dialler and
+     * needs only a tap on the call button.
      */
-    private void openSecureDialer() {
-        String code = getString(R.string.ussd_code).replace("#", "%23");
-        Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + code));
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivity(intent);
-        } else {
-            Toast.makeText(this, R.string.no_dialer, Toast.LENGTH_LONG).show();
+    private void placeCall() {
+        Uri uri = Uri.parse(UssdCode.toTelUri(dial.code));
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CALL_PHONE}, REQ_CALL);
+            return;
+        }
+
+        try {
+            startActivity(new Intent(Intent.ACTION_CALL, uri));
+        } catch (SecurityException | android.content.ActivityNotFoundException e) {
+            openDialer(uri);
         }
     }
 
-    private void append(String s) {
-        tvResponse.append(s);
+    private void openDialer(Uri uri) {
+        Intent dialIntent = new Intent(Intent.ACTION_DIAL, uri);
+        if (dialIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(dialIntent);
+        } else {
+            Toast.makeText(this, R.string.no_dialer, Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -149,12 +118,12 @@ public class UssdSessionActivity extends AppCompatActivity {
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQ_CALL) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                    && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                runUssd(getString(R.string.ussd_code));
+            Uri uri = Uri.parse(UssdCode.toTelUri(dial.code));
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                placeCall();
             } else {
-                Toast.makeText(this, R.string.perm_needed, Toast.LENGTH_LONG).show();
-                openSecureDialer();
+                // Not a dead end — the dialler route still works.
+                openDialer(uri);
             }
         }
     }

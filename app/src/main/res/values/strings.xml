@@ -5,7 +5,7 @@
     <string name="offline_ready">Offline</string>
 
     <string name="hero_title">Emergency offline UPI</string>
-    <string name="hero_sub">No data, no signup. Scan any UPI QR and pay over the *99# mobile-network rail — the bank menu shown here as clean steps, not a raw dialer screen.</string>
+    <string name="hero_sub">No data, no signup. Scan a UPI QR and UPay dials *99# with the recipient and amount already filled in — skipping the bank menus so only your PIN is left.</string>
 
     <string name="scan_and_pay">Scan &amp; Pay</string>
     <string name="enter_manually">Enter UPI ID or number</string>
@@ -18,10 +18,10 @@
     <!-- Steps -->
     <string name="step1_title">Scan the UPI QR</string>
     <string name="step1_desc">Works fully offline. We read the recipient\'s UPI ID and amount from the code — no typing.</string>
-    <string name="step2_title">Confirm in clean UI</string>
-    <string name="step2_desc">Check who you\'re paying and the amount. We run *99# in the background and show the bank\'s reply here.</string>
-    <string name="step3_title">Approve with your PIN</string>
-    <string name="step3_desc">The secure NPCI PIN screen opens for the final approval. Done — no internet used at any step.</string>
+    <string name="step2_title">Menus get skipped</string>
+    <string name="step2_desc">UPay dials *99# with the answers already built in, so the bank\'s menu steps are gone — and so is the waiting between them.</string>
+    <string name="step3_title">Just your UPI PIN</string>
+    <string name="step3_desc">Your bank asks for the PIN on its own secure screen. UPay never sees it. No internet used at any step.</string>
 
     <!-- Payment screen -->
     <string name="confirm_payment">Confirm payment</string>
@@ -31,6 +31,30 @@
     <string name="pay_via_ussd">Pay via *99# (offline)</string>
     <string name="pay_via_ivr">Or pay by IVR call (123PAY)</string>
     <string name="verify_recipient">Always verify the recipient before approving. Sending money cannot be undone.</string>
+
+    <!-- Pre-filled dialling -->
+    <string name="ready_to_pay">Ready to pay</string>
+    <string name="only_pin_left">Everything is filled in — only your UPI PIN is left.</string>
+    <string name="paste_then_pin">Paste the UPI ID once, then your PIN. The menus are skipped.</string>
+    <string name="answer_remaining">The menus are skipped — answer what\'s left.</string>
+    <string name="prefilled_code">What UPay will dial</string>
+    <string name="start_payment">Start payment</string>
+    <string name="pin_on_ussd">Your UPI PIN is typed on your phone\'s own *99# screen, never in UPay. The app only dials — it cannot see your PIN.</string>
+
+    <string name="copied_for_paste">UPI ID copied</string>
+    <string name="paste_hint">When your bank asks “Enter UPI ID”, long-press the box and tap Paste.</string>
+    <string name="copy_again">Copy again</string>
+    <string name="copied">Copied</string>
+
+    <!-- Bank menu settings -->
+    <string name="bank_menu_title">Bank menu numbers</string>
+    <string name="bank_menu_body">UPay skips the menus by dialling their numbers directly. Banks number them differently — if a payment lands in the wrong menu, correct the numbers here from your own *99# screen.</string>
+    <string name="opt_send_money">“Send Money” is option…</string>
+    <string name="opt_by_mobile">“Mobile No.” is option…</string>
+    <string name="opt_by_upi_id">“UPI ID” is option…</string>
+    <string name="bank_menu_saved">Saved</string>
+    <string name="bank_settings">Bank menu settings</string>
+    <string name="save">Save</string>
 
     <!-- USSD session -->
     <string name="offline_session">Offline session</string>

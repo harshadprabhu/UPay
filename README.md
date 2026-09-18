@@ -21,24 +21,45 @@ which run over the plain telecom network and need no internet connection.
 - 📷 **Offline QR scan** — read any standard UPI QR code on-device (ZXing, no network)
   and auto-fill the recipient UPI ID and amount. No manual typing.
 - ⌨️ **Manual entry** — or type a UPI ID / mobile number yourself.
-- ⚡ **In-app `*99#` session** — on Android 8+ the app runs `*99#` in the background via
-  `TelephonyManager.sendUssdRequest()` and renders the bank's replies as clean UI
-  instead of the raw system dialer overlay.
+- ⚡ **The bank menus are skipped.** Instead of walking the `*99#` menu one slow step at
+  a time, UPay dials a string with the answers already in it:
+
+  ```
+  *99*1*1*9876543210*500*1#
+     │ │  │          │   └── skip the remark
+     │ │  │          └────── amount
+     │ │  └───────────────── payee's mobile number
+     │ └──────────────────── send by mobile number
+     └────────────────────── Send Money
+  ```
+
+  Each menu step is a separate round trip to the network, so collapsing them removes
+  most of the typing **and** most of the waiting. Only the UPI PIN prompt is left.
+- 📋 **Clipboard assist for UPI IDs** — a UPI ID contains `@`, `.` and `-`, which a USSD
+  dial string can't reliably carry. For those, UPay dials straight to the "Enter UPI ID"
+  prompt and copies the address so it's one long-press to paste.
+- 🏦 **Adjustable menu numbers** — banks number their menus differently (a real HDFC menu
+  lists `1, 3, 4, 5` and skips `2`), so the option digits are editable in Settings.
 - 📞 **IVR fallback** — pay by calling NPCI's UPI 123PAY voice line.
-- 🔒 **Your UPI PIN is never handled by UPay.** At the approval step the app hands off
-  to the phone's **secure NPCI PIN screen** — the only compliant place to type a UPI PIN.
+- 🔒 **Your UPI PIN is never handled by UPay.** It's typed on the phone's own `*99#`
+  screen. The app only dials — it has no way to see your PIN.
 - 🚫 **No `INTERNET` permission.** Works fully offline by design.
 - 🙌 **No signup, no account.** Download and use.
 
 ## Honest limitations
 
+- **The PIN prompt always comes from your bank**, on the system's own USSD screen. That
+  is deliberate and is the right place for it — no app should ever collect a UPI PIN.
+- **How deep the pre-filled string goes can vary** by bank and telecom operator. If the
+  network stops partway, the remaining prompts simply appear as normal and you answer
+  them — you still skip everything up to that point.
+- **UPI IDs can't go inside the dial string**, hence the clipboard-paste step for them.
+  Payments to a **mobile number** are the ones that pre-fill completely.
 - **IVR cannot be turned into in-app UI.** IVR is a voice call; Android gives apps no
-  access to live call audio, so IVR is a real phone call the user listens to — not
-  on-screen buttons.
-- **UPI PIN entry is always handed off** to the secure system screen (by design and by
-  NPCI rules), never captured in-app.
-- **Programmatic `*99#`** requires Android 8+ and carrier support; where unavailable,
-  UPay falls back to the secure dialer with `*99#` pre-filled.
+  access to live call audio, so IVR is a real phone call the user listens to.
+- **Fully embedding the payment** (no system screen at all) requires being an authorised
+  NPCI **TPAP** with a PSP bank partnership — a licensing requirement, not a technical
+  one. No sideloaded app can do it.
 
 ## Tech
 
