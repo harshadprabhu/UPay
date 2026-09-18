@@ -70,15 +70,25 @@ public class UssdCode {
 
     /** What the app managed to pre-answer, so the UI can say so honestly. */
     public static class Dial {
-        /** The string to dial, e.g. {@code *99*1*1*9876543210*500*1#}. */
+        /**
+         * The string that is safe to hand to the dialler. Android strips
+         * non-dialable characters from a {@code tel:} URI, so for a UPI ID this
+         * is only the numeric prefix that reaches the "Enter UPI ID" prompt.
+         */
         public final String code;
+        /**
+         * The complete string including a UPI ID, for the alphanumeric attempt
+         * via {@code sendUssdRequest}. Null when {@link #code} is already complete.
+         */
+        public final String fullCode;
         /** Text to put on the clipboard for pasting, or null. */
         public final String clipboard;
-        /** True when only the UPI PIN should remain. */
+        /** True when {@link #code} alone leaves nothing but the UPI PIN. */
         public final boolean fullyPrefilled;
 
-        Dial(String code, String clipboard, boolean fullyPrefilled) {
+        Dial(String code, String fullCode, String clipboard, boolean fullyPrefilled) {
             this.code = code;
+            this.fullCode = fullCode;
             this.clipboard = clipboard;
             this.fullyPrefilled = fullyPrefilled;
         }
@@ -93,18 +103,28 @@ public class UssdCode {
         String amt = amount == null ? "" : amount.trim();
 
         if (isMobile(p)) {
-            // Everything is numeric, so the whole branch can be pre-answered.
+            // Entirely numeric, so the dialler carries it verbatim.
             String code = "*99*" + sendMoney + "*" + byMobile + "*" + p;
             if (!TextUtils.isEmpty(amt)) {
                 code += "*" + amt + "*" + SKIP_REMARK;
             }
-            return new Dial(code + "#", null, !TextUtils.isEmpty(amt));
+            code += "#";
+            return new Dial(code, code, null, !TextUtils.isEmpty(amt));
         }
 
-        // UPI ID: go straight to the "Enter UPI ID" prompt and hand the address
-        // over via the clipboard instead of risking it inside the dial string.
-        String code = "*99*" + sendMoney + "*" + byUpiId + "#";
-        return new Dial(code, p, false);
+        // A UPI ID contains '@', '.' and '-'. PhoneNumberUtils drops characters
+        // it considers undialable, so routing this through a tel: URI would
+        // silently mangle the address — with real money attached. Two routes:
+        //   1. sendUssdRequest, which takes the string directly and may carry it;
+        //   2. failing that, dial only as far as the "Enter UPI ID" prompt and
+        //      paste the address from the clipboard.
+        String prefix = "*99*" + sendMoney + "*" + byUpiId + "#";
+        String full = "*99*" + sendMoney + "*" + byUpiId + "*" + p;
+        if (!TextUtils.isEmpty(amt)) {
+            full += "*" + amt + "*" + SKIP_REMARK;
+        }
+        full += "#";
+        return new Dial(prefix, full, p, false);
     }
 
     public static boolean isMobile(String s) {

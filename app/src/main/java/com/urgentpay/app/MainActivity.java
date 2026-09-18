@@ -1,6 +1,8 @@
 package com.urgentpay.app;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
@@ -8,8 +10,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
@@ -19,6 +24,8 @@ import com.journeyapps.barcodescanner.ScanOptions;
  * number. Both routes end in {@link PaymentActivity}.
  */
 public class MainActivity extends AppCompatActivity {
+
+    private static final int REQ_CAMERA = 12;
 
     private final ActivityResultLauncher<ScanOptions> scanLauncher =
             registerForActivityResult(new ScanContract(), result -> {
@@ -84,22 +91,62 @@ public class MainActivity extends AppCompatActivity {
         ((TextView) c.findViewById(R.id.stepDesc)).setText(desc);
     }
 
+    /**
+     * Asks for the camera up front rather than relying on the scanner library to
+     * do it, which on some devices just yields a black preview and no error.
+     */
     private void launchScanner() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CAMERA}, REQ_CAMERA);
+            return;
+        }
+
         ScanOptions options = new ScanOptions();
-        options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
+        // Accept Data Matrix too: a few merchant codes are printed in it rather
+        // than as a plain QR.
+        options.setDesiredBarcodeFormats(ScanOptions.QR_CODE, ScanOptions.DATA_MATRIX);
         options.setPrompt(getString(R.string.scan_prompt));
         options.setBeepEnabled(false);
         options.setOrientationLocked(false);
         scanLauncher.launch(options);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_CAMERA) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                launchScanner();
+            } else {
+                Toast.makeText(this, R.string.camera_needed, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
     private void handleScanned(String contents) {
         UpiUri upi = UpiUri.parse(contents);
         if (upi == null) {
-            Toast.makeText(this, R.string.not_upi_qr, Toast.LENGTH_LONG).show();
+            // Show what was actually in the code — a silent "didn't work" makes
+            // an unsupported QR format impossible to report or diagnose.
+            showUnreadableQr(contents);
             return;
         }
         openPayment(upi);
+    }
+
+    private void showUnreadableQr(String contents) {
+        String preview = contents == null ? "(empty)" : contents.trim();
+        if (preview.length() > 300) preview = preview.substring(0, 300) + "…";
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.not_upi_qr)
+                .setMessage(getString(R.string.not_upi_qr_detail, preview))
+                .setPositiveButton(android.R.string.ok, null)
+                .setNeutralButton(R.string.scan_again, (d, w) -> launchScanner())
+                .show();
     }
 
     private void showManualEntry() {

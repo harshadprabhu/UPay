@@ -3,76 +3,201 @@ package com.urgentpay.app;
 import android.net.Uri;
 import android.text.TextUtils;
 
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Parses a UPI deep link (the payload inside a standard UPI QR code), e.g.
- * {@code upi://pay?pa=merchant@bank&pn=Merchant%20Name&am=100.00&cu=INR}.
+ * Extracts a payee out of whatever a UPI QR code actually contains.
  *
- * Parsing is done entirely on-device with no network access.
+ * Real-world QRs are not all the tidy {@code upi://pay?pa=…} deep link. The
+ * four shapes that turn up in practice, all handled here and all parsed purely
+ * on-device:
+ *
+ * <ol>
+ *   <li><b>UPI deep link</b> — {@code upi://pay?pa=x@bank&pn=Name&am=100}, and the
+ *       app-specific variants ({@code tez://}, {@code phonepe://}, {@code paytmmp://}).</li>
+ *   <li><b>EMVCo / BharatQR</b> — the TLV format most merchant QRs (including
+ *       Google Pay and PhonePe merchant codes) are printed in. Looks like
+ *       {@code 00020101021226…} and contains no "upi:" anywhere.</li>
+ *   <li><b>An https link</b> that carries the UPI parameters in its query.</li>
+ *   <li><b>Bare text</b> — a UPI ID or a 10-digit mobile number.</li>
+ * </ol>
+ *
+ * Anything unrecognised falls through to a last-resort scan for a UPI-ID-shaped
+ * substring, because a QR that contains a payable address in <em>some</em> form
+ * is far more common than one that contains none.
  */
 public class UpiUri {
 
-    public final String vpa;      // pa= payee address (UPI ID)
-    public final String name;     // pn= payee name
-    public final String amount;   // am= amount (may be empty)
-    public final String note;     // tn= transaction note
+    public final String vpa;      // payee address (UPI ID) or mobile number
+    public final String name;     // payee name, may be empty
+    public final String amount;   // amount, may be empty
+    public final String note;     // transaction note, may be empty
 
     private static final Pattern MOBILE = Pattern.compile("^[6-9]\\d{9}$");
+
+    /** A UPI handle: local part, '@', then the bank handle. */
     private static final Pattern VPA_PATTERN =
-            Pattern.compile("^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$");
+            Pattern.compile("^[a-zA-Z0-9][a-zA-Z0-9._\\-]{1,255}@[a-zA-Z][a-zA-Z0-9.\\-]{1,63}$");
+
+    /** The same shape, used to hunt for a VPA inside a larger blob of text. */
+    private static final Pattern VPA_IN_TEXT =
+            Pattern.compile("[a-zA-Z0-9][a-zA-Z0-9._\\-]{1,255}@[a-zA-Z][a-zA-Z0-9.\\-]{1,63}");
 
     private UpiUri(String vpa, String name, String amount, String note) {
         this.vpa = vpa;
-        this.name = name;
-        this.amount = amount;
-        this.note = note;
+        this.name = name == null ? "" : name.trim();
+        this.amount = normaliseAmount(amount);
+        this.note = note == null ? "" : note.trim();
     }
 
-    /** Returns a parsed UpiUri, or null if the text is not a usable UPI target. */
+    /** Strips a trailing ".00" and anything non-numeric the QR may carry. */
+    private static String normaliseAmount(String a) {
+        if (TextUtils.isEmpty(a)) return "";
+        String s = a.trim().replaceAll("[^0-9.]", "");
+        if (s.isEmpty()) return "";
+        if (s.endsWith(".00")) s = s.substring(0, s.length() - 3);
+        if (s.endsWith(".0")) s = s.substring(0, s.length() - 2);
+        if (s.endsWith(".")) s = s.substring(0, s.length() - 1);
+        return "0".equals(s) ? "" : s;
+    }
+
+    /** Returns a parsed payee, or null if nothing payable could be found. */
     public static UpiUri parse(String raw) {
         if (TextUtils.isEmpty(raw)) return null;
         raw = raw.trim();
 
-        // Case 1: a full upi:// deep link (from a scanned QR).
-        if (raw.toLowerCase().startsWith("upi:")) {
-            try {
-                Uri uri = Uri.parse(raw);
-                String pa = uri.getQueryParameter("pa");
-                if (isValidVpa(pa)) {
-                    String pn = safe(uri.getQueryParameter("pn"));
-                    String am = safe(uri.getQueryParameter("am"));
-                    String tn = safe(uri.getQueryParameter("tn"));
-                    return new UpiUri(pa.trim(), pn, am, tn);
-                }
-            } catch (Exception ignored) {
-                return null;
+        UpiUri fromLink = fromDeepLink(raw);
+        if (fromLink != null) return fromLink;
+
+        UpiUri fromEmv = fromEmv(raw);
+        if (fromEmv != null) return fromEmv;
+
+        // Bare UPI ID or mobile number typed or encoded directly.
+        if (isValidVpa(raw)) return new UpiUri(raw, "", "", "");
+        if (MOBILE.matcher(raw).matches()) return new UpiUri(raw, "", "", "");
+
+        // Last resort: find a UPI-ID-shaped token anywhere in the payload.
+        Matcher m = VPA_IN_TEXT.matcher(raw);
+        while (m.find()) {
+            String candidate = m.group();
+            if (isValidVpa(candidate)) {
+                return new UpiUri(candidate, "", "", "");
             }
-            return null;
         }
-
-        // Case 2: a bare UPI ID typed by the user.
-        if (isValidVpa(raw)) {
-            return new UpiUri(raw, "", "", "");
-        }
-
-        // Case 3: a bare 10-digit mobile number typed by the user.
-        if (MOBILE.matcher(raw).matches()) {
-            return new UpiUri(raw, "", "", "");
-        }
-
         return null;
     }
 
+    /** Handles upi://, tez://, phonepe://, paytmmp:// and https:// links. */
+    private static UpiUri fromDeepLink(String raw) {
+        String lower = raw.toLowerCase(Locale.ROOT);
+        boolean looksLikeLink = lower.startsWith("upi:") || lower.startsWith("tez:")
+                || lower.startsWith("phonepe:") || lower.startsWith("paytmmp:")
+                || lower.startsWith("bhim:") || lower.startsWith("gpay:")
+                || lower.startsWith("http:") || lower.startsWith("https:");
+        if (!looksLikeLink) return null;
+
+        try {
+            Uri uri = Uri.parse(raw);
+            String pa = firstParam(uri, "pa", "payeeAddress", "vpa");
+            if (isValidVpa(pa)) {
+                return new UpiUri(pa.trim(),
+                        firstParam(uri, "pn", "payeeName"),
+                        firstParam(uri, "am", "amount"),
+                        firstParam(uri, "tn", "note"));
+            }
+        } catch (Exception ignored) {
+            // Malformed URI — the caller's fallbacks still apply.
+        }
+        return null;
+    }
+
+    private static String firstParam(Uri uri, String... keys) {
+        for (String k : keys) {
+            try {
+                String v = uri.getQueryParameter(k);
+                if (!TextUtils.isEmpty(v)) return v;
+            } catch (Exception ignored) {
+                // Not a hierarchical URI; nothing to read.
+            }
+        }
+        return "";
+    }
+
+    // ---- EMVCo / BharatQR ----------------------------------------------
+
+    /**
+     * Parses the EMVCo TLV format used by most printed merchant QRs.
+     *
+     * The payload is a flat run of {@code TTLLvalue} entries. The payee lives
+     * inside one of the "merchant account information" templates (tags 26–51),
+     * which are themselves TLV. Rather than assume a fixed sub-tag number —
+     * issuers differ — every value in those templates is tested against the UPI
+     * ID shape and the first match wins.
+     */
+    private static UpiUri fromEmv(String raw) {
+        // Every EMVCo payload starts with the payload format indicator "000201".
+        if (!raw.startsWith("0002")) return null;
+
+        Map<String, String> top = tlv(raw);
+        if (top.isEmpty()) return null;
+
+        String vpa = null;
+        for (int tag = 26; tag <= 51 && vpa == null; tag++) {
+            String template = top.get(String.format(Locale.ROOT, "%02d", tag));
+            if (template == null) continue;
+            for (String value : tlv(template).values()) {
+                if (isValidVpa(value)) {
+                    vpa = value;
+                    break;
+                }
+            }
+        }
+        if (vpa == null) return null;
+
+        String amount = top.get("54");   // transaction amount
+        String name = top.get("59");     // merchant name
+        return new UpiUri(vpa, name, amount, "");
+    }
+
+    /** Splits an EMVCo payload into its tag → value entries. */
+    private static Map<String, String> tlv(String s) {
+        Map<String, String> out = new LinkedHashMap<>();
+        int i = 0;
+        while (i + 4 <= s.length()) {
+            String tag = s.substring(i, i + 2);
+            int len;
+            try {
+                len = Integer.parseInt(s.substring(i + 2, i + 4));
+            } catch (NumberFormatException e) {
+                break; // Not TLV after all.
+            }
+            int start = i + 4;
+            int end = start + len;
+            if (len < 0 || end > s.length()) break;
+            out.put(tag, s.substring(start, end));
+            i = end;
+        }
+        return out;
+    }
+
+    // ---- helpers --------------------------------------------------------
+
     public static boolean isValidVpa(String s) {
-        return !TextUtils.isEmpty(s) && VPA_PATTERN.matcher(s.trim()).matches();
+        if (TextUtils.isEmpty(s)) return false;
+        String t = s.trim();
+        // An amount or a numeric blob can contain '@' in odd QRs; require a letter.
+        return VPA_PATTERN.matcher(t).matches() && t.matches(".*[a-zA-Z].*");
+    }
+
+    public boolean isMobile() {
+        return MOBILE.matcher(vpa).matches();
     }
 
     public boolean hasName() {
         return !TextUtils.isEmpty(name);
-    }
-
-    private static String safe(String s) {
-        return s == null ? "" : s.trim();
     }
 }

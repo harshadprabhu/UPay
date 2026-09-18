@@ -7,12 +7,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.telephony.TelephonyManager;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -83,13 +88,14 @@ public class UssdSessionActivity extends AppCompatActivity {
     }
 
     /**
-     * Dials the prepared string. ACTION_CALL runs it straight away; without the
-     * permission we fall back to ACTION_DIAL, which pre-fills the dialler and
-     * needs only a tap on the call button.
+     * Starts the payment.
+     *
+     * For a UPI ID we first try {@code sendUssdRequest}, which takes the string
+     * as-is and so can carry the '@' that a {@code tel:} URI would strip. If the
+     * network or device rejects it we fall back to dialling the numeric prefix
+     * and pasting the address — so the attempt can only ever help.
      */
     private void placeCall() {
-        Uri uri = Uri.parse(UssdCode.toTelUri(dial.code));
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -97,6 +103,54 @@ public class UssdSessionActivity extends AppCompatActivity {
             return;
         }
 
+        boolean alphanumeric = dial.fullCode != null && !dial.fullCode.equals(dial.code);
+        if (alphanumeric && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if (trySendUssd(dial.fullCode)) return;
+        }
+
+        dialCode(dial.code);
+    }
+
+    /**
+     * @return true if the request was accepted for sending; false if we should
+     *         fall back immediately.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    private boolean trySendUssd(String fullCode) {
+        TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        if (tm == null) return false;
+
+        setStatus(getString(R.string.trying_full_auto));
+        try {
+            tm.sendUssdRequest(fullCode, new TelephonyManager.UssdResponseCallback() {
+                @Override
+                public void onReceiveUssdResponse(TelephonyManager t, String request,
+                                                  CharSequence response) {
+                    // The network took the whole string; its reply (normally the
+                    // UPI PIN prompt) is now on screen.
+                    setStatus(getString(R.string.full_auto_worked));
+                }
+
+                @Override
+                public void onReceiveUssdResponseFailed(TelephonyManager t, String request,
+                                                        int failureCode) {
+                    // Expected on networks that won't carry a UPI ID inline.
+                    setStatus(getString(R.string.full_auto_fell_back));
+                    dialCode(dial.code);
+                }
+            }, new Handler(Looper.getMainLooper()));
+            return true;
+        } catch (SecurityException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private void setStatus(String text) {
+        runOnUiThread(() -> ((TextView) findViewById(R.id.tvWhatsLeft)).setText(text));
+    }
+
+    private void dialCode(String code) {
+        Uri uri = Uri.parse(UssdCode.toTelUri(code));
         try {
             startActivity(new Intent(Intent.ACTION_CALL, uri));
         } catch (SecurityException | android.content.ActivityNotFoundException e) {
@@ -118,12 +172,11 @@ public class UssdSessionActivity extends AppCompatActivity {
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == REQ_CALL) {
-            Uri uri = Uri.parse(UssdCode.toTelUri(dial.code));
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 placeCall();
             } else {
                 // Not a dead end — the dialler route still works.
-                openDialer(uri);
+                openDialer(Uri.parse(UssdCode.toTelUri(dial.code)));
             }
         }
     }

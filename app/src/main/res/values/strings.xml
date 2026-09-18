@@ -76,6 +76,12 @@
     <string name="ussd_code">*99#</string>
     <string name="perm_needed">Phone permission is needed to run the offline payment rail. You can also use the secure dialer.</string>
     <string name="no_dialer">No phone dialer found on this device.</string>
-    <string name="scan_prompt">Point at a UPI QR code</string>
-    <string name="not_upi_qr">That doesn\'t look like a UPI QR code.</string>
+    <string name="scan_prompt">Point at any UPI QR code</string>
+    <string name="camera_needed">Camera permission is needed to scan a QR code. You can still enter the UPI ID manually.</string>
+    <string name="not_upi_qr">No UPI ID in that code</string>
+    <string name="not_upi_qr_detail">UPay read the QR but couldn\'t find a payable UPI ID in it. Here\'s what it contained:\n\n%1$s</string>
+    <string name="scan_again">Scan again</string>
+    <string name="trying_full_auto">Sending the UPI ID with the request…</string>
+    <string name="full_auto_worked">Sent — your bank should now ask only for the PIN.</string>
+    <string name="full_auto_fell_back">Your network wouldn\'t take the UPI ID inline — paste it instead.</string>
 </resources>
