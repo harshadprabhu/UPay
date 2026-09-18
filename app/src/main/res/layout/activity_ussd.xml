@@ -93,6 +93,55 @@
                 android:textSize="16sp" />
         </LinearLayout>
 
+        <!-- Disclosure: payee addressed by the mobile number inside their UPI ID -->
+        <LinearLayout
+            android:id="@+id/derivedCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/glass_card"
+            android:orientation="vertical"
+            android:padding="18dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/paying_by_mobile"
+                android:textColor="@color/cream"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvDerivedText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:lineSpacingMultiplier="1.2"
+                android:text=""
+                android:textColor="@color/cream_muted"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:id="@+id/btnUseExactVpa"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/btn_ghost"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:paddingVertical="13dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/use_exact_vpa"
+                    android:textColor="@color/copper_light"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
         <!-- Clipboard card: only for UPI-ID payments -->
         <LinearLayout
             android:id="@+id/clipboardCard"

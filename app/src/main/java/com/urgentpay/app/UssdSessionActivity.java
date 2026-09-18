@@ -40,6 +40,7 @@ public class UssdSessionActivity extends AppCompatActivity {
 
     private String payee;
     private String amount;
+    private UssdCode codes;
     private UssdCode.Dial dial;
 
     @Override
@@ -51,7 +52,7 @@ public class UssdSessionActivity extends AppCompatActivity {
         amount = getIntent().getStringExtra(EXTRA_AMOUNT);
         String beneficiaryIndex = getIntent().getStringExtra(EXTRA_BENEFICIARY_INDEX);
 
-        UssdCode codes = new UssdCode(this);
+        codes = new UssdCode(this);
         // A saved payee has a numeric list number at the bank, which survives the
         // dial-string stripping that a UPI ID does not — so this route alone can
         // pre-fill a UPI-ID payment completely.
@@ -61,15 +62,48 @@ public class UssdSessionActivity extends AppCompatActivity {
 
         ((TextView) findViewById(R.id.tvSummaryPayee)).setText(payee);
         ((TextView) findViewById(R.id.tvSummaryAmount)).setText("₹" + amount);
+
+        findViewById(R.id.btnDial).setOnClickListener(v -> placeCall());
+        findViewById(R.id.btnCopyAgain).setOnClickListener(v -> {
+            copyToClipboard(dial.clipboard);
+            Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show();
+        });
+        // Paying the mobile number inside a UPI ID is a different instruction to
+        // the bank, so the user keeps a way back to the exact address.
+        findViewById(R.id.btnUseExactVpa).setOnClickListener(v -> {
+            dial = codes.buildViaUpiIdPrompt(payee);
+            render();
+        });
+
+        render();
+    }
+
+    /** Reflects the current {@link #dial} — what gets dialled and what's left to do. */
+    private void render() {
         ((TextView) findViewById(R.id.tvDialCode)).setText(dial.code);
 
         TextView tvWhatsLeft = findViewById(R.id.tvWhatsLeft);
         View clipboardCard = findViewById(R.id.clipboardCard);
+        View derivedCard = findViewById(R.id.derivedCard);
+
+        if (dial.derivedMobile != null) {
+            // Fully pre-filled, but addressed by number rather than by the UPI ID
+            // that was scanned — say so plainly before any money moves.
+            tvWhatsLeft.setText(R.string.only_pin_left);
+            derivedCard.setVisibility(View.VISIBLE);
+            ((TextView) findViewById(R.id.tvDerivedText))
+                    .setText(getString(R.string.paying_by_mobile_detail,
+                            dial.derivedMobile, payee));
+            clipboardCard.setVisibility(View.GONE);
+            return;
+        }
+
+        derivedCard.setVisibility(View.GONE);
 
         if (dial.fullyPrefilled) {
             tvWhatsLeft.setText(R.string.only_pin_left);
             clipboardCard.setVisibility(View.GONE);
-        } else if (dial.clipboard != null) {
+        } else if (dial.clipboard != null && !dial.clipboard.isEmpty()) {
             // Payee is a UPI ID — copy it so it's one long-press to paste.
             copyToClipboard(dial.clipboard);
             tvWhatsLeft.setText(R.string.paste_then_pin);
@@ -79,12 +113,6 @@ public class UssdSessionActivity extends AppCompatActivity {
             tvWhatsLeft.setText(R.string.answer_remaining);
             clipboardCard.setVisibility(View.GONE);
         }
-
-        findViewById(R.id.btnDial).setOnClickListener(v -> placeCall());
-        findViewById(R.id.btnCopyAgain).setOnClickListener(v -> {
-            copyToClipboard(dial.clipboard);
-            Toast.makeText(this, R.string.copied, Toast.LENGTH_SHORT).show();
-        });
     }
 
     private void copyToClipboard(String value) {

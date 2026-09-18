@@ -106,4 +106,9 @@
     <string name="remove">Remove</string>
     <string name="edit">Edit</string>
     <string name="one_tap_ready">One tap — everything is filled in but your PIN.</string>
+
+    <!-- Paying the mobile number found inside a UPI ID -->
+    <string name="paying_by_mobile">Sending to their mobile number</string>
+    <string name="paying_by_mobile_detail">This UPI ID is a mobile number, so UPay can send the whole payment in one go — nothing to paste.\n\nPaying %1$s instead of %2$s. It reaches the same person, but lands in whichever account they have set as their UPI default, which may not be this one.</string>
+    <string name="use_exact_vpa">Pay the exact UPI ID instead</string>
 </resources>

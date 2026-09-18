@@ -100,6 +100,12 @@ public class UssdCode {
         public final String clipboard;
         /** True when {@link #code} alone leaves nothing but the UPI PIN. */
         public final boolean fullyPrefilled;
+        /**
+         * Set when the payee was addressed by a mobile number pulled out of their
+         * UPI ID rather than by the UPI ID itself. The UI must disclose this: it
+         * reaches the same person, but possibly a different linked account.
+         */
+        public String derivedMobile;
 
         Dial(String code, String fullCode, String clipboard, boolean fullyPrefilled) {
             this.code = code;
@@ -127,6 +133,24 @@ public class UssdCode {
             return new Dial(code, code, null, !TextUtils.isEmpty(amt));
         }
 
+        // A great many personal UPI IDs are simply the person's mobile number
+        // with a handle bolted on — 9821108371@ybl, @paytm, @yescred. The number
+        // is all digits, so unlike the UPI ID itself it survives dialling and the
+        // payment can be pre-filled completely.
+        String mobileInVpa = mobileFromVpa(p);
+        if (mobileInVpa != null) {
+            String code = "*99*" + sendMoney + "*" + byMobile + "*" + mobileInVpa;
+            if (!TextUtils.isEmpty(amt)) {
+                code += "*" + amt + "*" + SKIP_REMARK;
+            }
+            code += "#";
+            // Keep the original address on the clipboard so the user can still
+            // choose to pay the exact UPI ID instead.
+            Dial d = new Dial(code, code, p, !TextUtils.isEmpty(amt));
+            d.derivedMobile = mobileInVpa;
+            return d;
+        }
+
         // The NUUP spec permits *99*1*3*VPA*AMOUNT*REMARKS#, but Android will not
         // carry it: the telephony layer strips every character it treats as
         // undialable before the request leaves the phone. Sending
@@ -138,8 +162,16 @@ public class UssdCode {
         // transfer cannot be reversed. So a UPI ID is never placed in the dial
         // string: dial only as far as the "Enter UPI ID" prompt and hand the
         // address over via the clipboard, intact.
+        return buildViaUpiIdPrompt(p);
+    }
+
+    /**
+     * Dials only as far as the "Enter UPI ID" prompt, leaving the address to be
+     * pasted. Always correct for the exact payee, at the cost of one paste.
+     */
+    public Dial buildViaUpiIdPrompt(String vpa) {
         String prefix = "*99*" + sendMoney + "*" + byUpiId + "#";
-        return new Dial(prefix, null, p, false);
+        return new Dial(prefix, null, vpa == null ? "" : vpa.trim(), false);
     }
 
     /**
@@ -172,6 +204,33 @@ public class UssdCode {
 
     public static boolean isMobile(String s) {
         return s != null && s.trim().matches("^[6-9]\\d{9}$");
+    }
+
+    /**
+     * Pulls an Indian mobile number out of a UPI ID whose local part is one,
+     * e.g. {@code 9821108371@ybl} or {@code 919821108371@paytm}. Returns null
+     * when the local part is anything else.
+     *
+     * This is what rescues the common case: personal UPI IDs issued by PhonePe,
+     * Paytm, CRED and others are just the phone number plus a handle, and a
+     * phone number is all digits — so it survives a dial string where the UPI
+     * ID would not.
+     */
+    public static String mobileFromVpa(String vpa) {
+        if (vpa == null) return null;
+        int at = vpa.indexOf('@');
+        if (at <= 0) return null;
+
+        String local = vpa.substring(0, at).trim();
+        if (!local.matches("\\d+")) return null;
+
+        // Accept a 91 country prefix, with or without a leading 0.
+        if (local.length() == 12 && local.startsWith("91")) {
+            local = local.substring(2);
+        } else if (local.length() == 11 && local.startsWith("0")) {
+            local = local.substring(1);
+        }
+        return isMobile(local) ? local : null;
     }
 
 }
