@@ -90,4 +90,20 @@
     <string name="hero_line">Pay when the\ninternet won\'t.</string>
     <string name="no_internet_needed">NO INTERNET NEEDED</string>
     <string name="scan_and_pay_sub">any UPI QR, offline</string>
+
+    <!-- Saved payees -->
+    <string name="saved_payees">ONE-TAP PAYEES</string>
+    <string name="saved_payees_empty">Add someone you\'ve saved at your bank and UPay can pay them in one shot — no menus, no pasting, just your PIN.\n\nThis is the only way a UPI ID can be sent complete, because the bank refers to a saved payee by a number.</string>
+    <string name="add_saved_payee">+ Add a one-tap payee</string>
+    <string name="add_payee_title">Add a one-tap payee</string>
+    <string name="add_payee_body">First save this person at your bank (during any *99# payment, choose to save the payee when offered). Your bank then lists them under a number.\n\nEnter that number here and UPay can pay them in a single dial — nothing left but your PIN.</string>
+    <string name="show_bank_list">See my bank\'s saved list</string>
+    <string name="payee_nickname">Name (your own label)</string>
+    <string name="payee_vpa">Their UPI ID</string>
+    <string name="payee_index">Their number in the bank\'s list</string>
+    <string name="payee_incomplete">Fill in a name, a UPI ID, and the bank\'s list number.</string>
+    <string name="remove_payee_confirm">Remove %1$s from your one-tap payees? This only forgets them in UPay — your bank keeps them saved.</string>
+    <string name="remove">Remove</string>
+    <string name="edit">Edit</string>
+    <string name="one_tap_ready">One tap — everything is filled in but your PIN.</string>
 </resources>

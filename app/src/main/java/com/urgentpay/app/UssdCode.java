@@ -28,12 +28,17 @@ import android.text.TextUtils;
  * particular issuer or language pack ever reorders them, but the defaults are
  * expected to be correct everywhere.
  *
- * <h3>UPI IDs</h3>
- * The specification lists {@code *99*1*3*VPA*AMOUNT*REMARKS#} as a valid direct
- * string, so a UPI ID can be supplied inline. What is not guaranteed is that
- * the {@code @} survives the trip through Android's dialler, so the caller
- * tries the request API first and keeps the address on the clipboard as a
- * manual last resort.
+ * <h3>UPI IDs cannot travel in a dial string</h3>
+ * The specification lists {@code *99*1*3*VPA*AMOUNT*REMARKS#}, but Android will
+ * not carry it: the telephony layer strips every character it treats as
+ * undialable, so "madhura.dudwadkar-4@oksbi" reached the bank as "4". A raw UPI
+ * ID is therefore only ever pasted by the user, never dialled.
+ *
+ * <h3>…unless the payee is saved at the bank</h3>
+ * A saved beneficiary has a numeric list number, and
+ * {@code *99*1*4*ID*AMOUNT*1*REMARKS#} is all digits — which survive intact.
+ * That is the one route to a fully pre-filled payment to a UPI ID, and it is
+ * what {@link #buildForBeneficiary} produces.
  */
 public class UssdCode {
 
@@ -42,11 +47,13 @@ public class UssdCode {
     private static final String KEY_SEND_MONEY = "opt_send_money";
     private static final String KEY_BY_MOBILE = "opt_by_mobile";
     private static final String KEY_BY_UPI_ID = "opt_by_upi_id";
+    private static final String KEY_SAVED_BENEFICIARY = "opt_saved_beneficiary";
 
     // Per the NUUP specification; the same on every member bank.
     private static final String DEF_SEND_MONEY = "1";
     private static final String DEF_BY_MOBILE = "1";
     private static final String DEF_BY_UPI_ID = "3";
+    private static final String DEF_SAVED_BENEFICIARY = "4";
 
     /** Answer given to "Enter a remark (Enter 1 to skip)". */
     private static final String SKIP_REMARK = "1";
@@ -54,12 +61,14 @@ public class UssdCode {
     private final String sendMoney;
     private final String byMobile;
     private final String byUpiId;
+    private final String savedBeneficiary;
 
     public UssdCode(Context context) {
         SharedPreferences p = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         sendMoney = p.getString(KEY_SEND_MONEY, DEF_SEND_MONEY);
         byMobile = p.getString(KEY_BY_MOBILE, DEF_BY_MOBILE);
         byUpiId = p.getString(KEY_BY_UPI_ID, DEF_BY_UPI_ID);
+        savedBeneficiary = p.getString(KEY_SAVED_BENEFICIARY, DEF_SAVED_BENEFICIARY);
     }
 
     public static void save(Context context, String sendMoney, String byMobile, String byUpiId) {
@@ -131,6 +140,34 @@ public class UssdCode {
         // address over via the clipboard, intact.
         String prefix = "*99*" + sendMoney + "*" + byUpiId + "#";
         return new Dial(prefix, null, p, false);
+    }
+
+    /**
+     * The one case where paying a UPI ID can be fully pre-filled.
+     *
+     * Once a payee is saved at the bank they have a list number, and the spec
+     * documents {@code *99*1*4*ID*AMOUNT*1*REMARKS#}. Every field is numeric, so
+     * nothing is lost to the dial-string stripping that defeats a raw UPI ID —
+     * the bank is left asking only for the PIN.
+     *
+     * @param index  the payee's number in the bank's saved-beneficiary list
+     * @param amount rupee amount
+     */
+    public Dial buildForBeneficiary(String index, String amount) {
+        String idx = index == null ? "" : index.trim();
+        String amt = amount == null ? "" : amount.trim();
+
+        String code = "*99*" + sendMoney + "*" + savedBeneficiary + "*" + idx;
+        if (!TextUtils.isEmpty(amt)) {
+            code += "*" + amt + "*1*" + SKIP_REMARK;
+        }
+        code += "#";
+        return new Dial(code, code, null, !TextUtils.isEmpty(amt));
+    }
+
+    /** Dials the saved-beneficiary list so the user can read off the numbers. */
+    public String listBeneficiariesCode() {
+        return "*99*" + sendMoney + "*" + savedBeneficiary + "#";
     }
 
     public static boolean isMobile(String s) {

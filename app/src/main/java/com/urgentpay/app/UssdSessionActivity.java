@@ -34,6 +34,7 @@ public class UssdSessionActivity extends AppCompatActivity {
 
     public static final String EXTRA_VPA = "extra_vpa";
     public static final String EXTRA_AMOUNT = "extra_amount";
+    public static final String EXTRA_BENEFICIARY_INDEX = "extra_beneficiary_index";
 
     private static final int REQ_CALL = 71;
 
@@ -48,8 +49,15 @@ public class UssdSessionActivity extends AppCompatActivity {
 
         payee = getIntent().getStringExtra(EXTRA_VPA);
         amount = getIntent().getStringExtra(EXTRA_AMOUNT);
+        String beneficiaryIndex = getIntent().getStringExtra(EXTRA_BENEFICIARY_INDEX);
 
-        dial = new UssdCode(this).build(payee, amount);
+        UssdCode codes = new UssdCode(this);
+        // A saved payee has a numeric list number at the bank, which survives the
+        // dial-string stripping that a UPI ID does not — so this route alone can
+        // pre-fill a UPI-ID payment completely.
+        dial = (beneficiaryIndex != null && beneficiaryIndex.matches("\\d{1,3}"))
+                ? codes.buildForBeneficiary(beneficiaryIndex, amount)
+                : codes.build(payee, amount);
 
         ((TextView) findViewById(R.id.tvSummaryPayee)).setText(payee);
         ((TextView) findViewById(R.id.tvSummaryAmount)).setText("₹" + amount);

@@ -149,12 +149,64 @@
                 android:textSize="15sp" />
         </LinearLayout>
 
-        <!-- Section label -->
+        <!-- Saved payees: the only route to a fully pre-filled UPI-ID payment -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="2dp"
             android:layout_marginTop="38dp"
+            android:alpha="0.65"
+            android:letterSpacing="0.18"
+            android:text="@string/saved_payees"
+            android:textColor="@color/cream_muted"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/payeeEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/glass_card"
+            android:lineSpacingMultiplier="1.2"
+            android:padding="18dp"
+            android:text="@string/saved_payees_empty"
+            android:textColor="@color/cream_muted"
+            android:textSize="13sp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:id="@+id/payeeList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="vertical" />
+
+        <LinearLayout
+            android:id="@+id/btnAddPayee"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/btn_ghost"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:paddingVertical="15dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/add_saved_payee"
+                android:textColor="@color/copper_light"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Section label -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="34dp"
             android:alpha="0.65"
             android:letterSpacing="0.18"
             android:text="@string/how_title"

@@ -19,8 +19,11 @@ public class PaymentActivity extends AppCompatActivity {
     public static final String EXTRA_VPA = "extra_vpa";
     public static final String EXTRA_NAME = "extra_name";
     public static final String EXTRA_AMOUNT = "extra_amount";
+    /** The bank's saved-beneficiary list number, when this payee has one. */
+    public static final String EXTRA_BENEFICIARY_INDEX = "extra_beneficiary_index";
 
     private String vpa;
+    private String beneficiaryIndex;
     private EditText etAmount;
 
     @Override
@@ -29,6 +32,7 @@ public class PaymentActivity extends AppCompatActivity {
         setContentView(R.layout.activity_payment);
 
         vpa = getIntent().getStringExtra(EXTRA_VPA);
+        beneficiaryIndex = getIntent().getStringExtra(EXTRA_BENEFICIARY_INDEX);
         String name = getIntent().getStringExtra(EXTRA_NAME);
         String amount = getIntent().getStringExtra(EXTRA_AMOUNT);
 
@@ -75,6 +79,7 @@ public class PaymentActivity extends AppCompatActivity {
         Intent i = new Intent(this, UssdSessionActivity.class);
         i.putExtra(UssdSessionActivity.EXTRA_VPA, vpa);
         i.putExtra(UssdSessionActivity.EXTRA_AMOUNT, amount());
+        i.putExtra(UssdSessionActivity.EXTRA_BENEFICIARY_INDEX, beneficiaryIndex);
         startActivity(i);
     }
 
