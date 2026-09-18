@@ -31,6 +31,17 @@
             </intent-filter>
         </activity>
 
+        <!--
+            Pinned to portrait on purpose: the scanner library's own
+            CaptureActivity is declared sensorLandscape in its manifest, which an
+            app cannot override, so UPay ships its own screen instead.
+        -->
+        <activity
+            android:name=".ScannerActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.UrgentPay.Scanner" />
+
         <activity
             android:name=".PaymentActivity"
             android:exported="false" />

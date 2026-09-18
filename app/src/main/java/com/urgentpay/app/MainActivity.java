@@ -10,14 +10,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.annotation.NonNull;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
-import com.journeyapps.barcodescanner.ScanContract;
-import com.journeyapps.barcodescanner.ScanOptions;
 
 /**
  * Home screen. Two ways in: scan a UPI QR (offline) or type a UPI ID / mobile
@@ -25,15 +20,20 @@ import com.journeyapps.barcodescanner.ScanOptions;
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQ_CAMERA = 12;
-
-    private final ActivityResultLauncher<ScanOptions> scanLauncher =
-            registerForActivityResult(new ScanContract(), result -> {
-                if (result.getContents() == null) {
-                    return; // user cancelled
-                }
-                handleScanned(result.getContents());
-            });
+    private final ActivityResultLauncher<Intent> scanLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() != RESULT_OK || result.getData() == null) {
+                            return; // cancelled
+                        }
+                        Intent data = result.getData();
+                        if (data.getBooleanExtra(ScannerActivity.EXTRA_MANUAL, false)) {
+                            showManualEntry();
+                            return;
+                        }
+                        String contents = data.getStringExtra(ScannerActivity.EXTRA_RESULT);
+                        if (contents != null) handleScanned(contents);
+                    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,38 +92,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Asks for the camera up front rather than relying on the scanner library to
-     * do it, which on some devices just yields a black preview and no error.
+     * Opens UPay's own scanner, which handles its own camera permission and,
+     * unlike the library's bundled one, stays in portrait.
      */
     private void launchScanner() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.CAMERA}, REQ_CAMERA);
-            return;
-        }
-
-        ScanOptions options = new ScanOptions();
-        // Accept Data Matrix too: a few merchant codes are printed in it rather
-        // than as a plain QR.
-        options.setDesiredBarcodeFormats(ScanOptions.QR_CODE, ScanOptions.DATA_MATRIX);
-        options.setPrompt(getString(R.string.scan_prompt));
-        options.setBeepEnabled(false);
-        options.setOrientationLocked(false);
-        scanLauncher.launch(options);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQ_CAMERA) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                launchScanner();
-            } else {
-                Toast.makeText(this, R.string.camera_needed, Toast.LENGTH_LONG).show();
-            }
-        }
+        scanLauncher.launch(new Intent(this, ScannerActivity.class));
     }
 
     private void handleScanned(String contents) {

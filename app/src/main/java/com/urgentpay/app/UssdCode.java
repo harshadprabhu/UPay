@@ -118,18 +118,19 @@ public class UssdCode {
             return new Dial(code, code, null, !TextUtils.isEmpty(amt));
         }
 
-        // Per the NUUP spec this is a valid direct string:
-        //     *99*1*3*VPA*AMOUNT*REMARKS#
-        // The open question is only whether the '@' survives Android's dialler,
-        // so `prefix` stays available as the shallow fallback that stops at the
-        // "Enter UPI ID" prompt.
+        // The NUUP spec permits *99*1*3*VPA*AMOUNT*REMARKS#, but Android will not
+        // carry it: the telephony layer strips every character it treats as
+        // undialable before the request leaves the phone. Sending
+        // "madhura.dudwadkar-4@oksbi" inline arrived at the bank as "4", which it
+        // rejected with "4 is not a valid UPI ID."
+        //
+        // That failure was at least loud. The same stripping could equally
+        // produce a *valid* address belonging to somebody else, and a UPI
+        // transfer cannot be reversed. So a UPI ID is never placed in the dial
+        // string: dial only as far as the "Enter UPI ID" prompt and hand the
+        // address over via the clipboard, intact.
         String prefix = "*99*" + sendMoney + "*" + byUpiId + "#";
-        String full = "*99*" + sendMoney + "*" + byUpiId + "*" + p;
-        if (!TextUtils.isEmpty(amt)) {
-            full += "*" + amt + "*" + SKIP_REMARK;
-        }
-        full += "#";
-        return new Dial(prefix, full, p, false);
+        return new Dial(prefix, null, p, false);
     }
 
     public static boolean isMobile(String s) {

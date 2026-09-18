@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg_app"
@@ -11,189 +10,180 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingHorizontal="20dp"
-        android:paddingTop="48dp"
-        android:paddingBottom="28dp">
+        android:paddingHorizontal="22dp"
+        android:paddingTop="56dp"
+        android:paddingBottom="32dp">
 
-        <!-- Header row -->
-        <LinearLayout
+        <!-- Wordmark -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:letterSpacing="0.14"
+            android:text="@string/app_short"
+            android:textColor="@color/cream"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:lineSpacingMultiplier="1.05"
+            android:text="@string/hero_line"
+            android:textColor="@color/cream"
+            android:textSize="38sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:lineSpacingMultiplier="1.25"
+            android:text="@string/hero_sub"
+            android:textColor="@color/cream_muted"
+            android:textSize="14sp" />
+
+        <!-- Offline chip -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/pill"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="8dp">
+
+            <ImageView
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:src="@drawable/ic_offline" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:letterSpacing="0.1"
+                android:text="@string/no_internet_needed"
+                android:textColor="@color/cream"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Primary action -->
+        <LinearLayout
+            android:id="@+id/btnScan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="34dp"
+            android:background="@drawable/btn_copper"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="22dp"
+            android:paddingVertical="22dp">
+
+            <ImageView
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@drawable/ic_scan" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/app_name"
-                    android:textColor="@color/cream"
-                    android:textSize="30sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.01" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="@string/tagline"
-                    android:textColor="@color/copper_light"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/pill"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="7dp">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_offline" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:text="@string/offline_ready"
-                    android:textColor="@color/cream"
-                    android:textSize="12sp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Hero glass card -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/glass_card_strong"
-            android:orientation="vertical"
-            android:padding="22dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/hero_title"
-                android:textColor="@color/cream"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="@string/hero_sub"
-                android:textColor="@color/cream_muted"
-                android:textSize="13sp"
-                android:lineSpacingMultiplier="1.2" />
-
-            <!-- Scan & Pay primary -->
-            <LinearLayout
-                android:id="@+id/btnScan"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/btn_copper"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="18dp"
-                android:paddingVertical="16dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_scan" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="14dp"
+                    android:letterSpacing="0.06"
                     android:text="@string/scan_and_pay"
                     android:textColor="@color/cocoa_900"
-                    android:textSize="17sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:src="@drawable/ic_arrow" />
-            </LinearLayout>
-
-            <!-- Manual entry ghost -->
-            <LinearLayout
-                android:id="@+id/btnManual"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/btn_ghost"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="18dp"
-                android:paddingVertical="15dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:src="@drawable/ic_keypad" />
-
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="14dp"
-                    android:text="@string/enter_manually"
-                    android:textColor="@color/cream"
-                    android:textSize="15sp" />
+                    android:alpha="0.7"
+                    android:text="@string/scan_and_pay_sub"
+                    android:textColor="@color/cocoa_900"
+                    android:textSize="12sp" />
             </LinearLayout>
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_arrow" />
         </LinearLayout>
 
-        <!-- How it works -->
+        <!-- Secondary action -->
+        <LinearLayout
+            android:id="@+id/btnManual"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/btn_ghost"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="22dp"
+            android:paddingVertical="19dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_keypad" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:text="@string/enter_manually"
+                android:textColor="@color/cream"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <!-- Section label -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="26dp"
-            android:layout_marginStart="4dp"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="38dp"
+            android:alpha="0.65"
+            android:letterSpacing="0.18"
             android:text="@string/how_title"
-            android:textColor="@color/cream"
-            android:textSize="16sp"
+            android:textColor="@color/cream_muted"
+            android:textSize="11sp"
             android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="14dp"
             android:background="@drawable/glass_card"
             android:orientation="vertical"
-            android:padding="6dp">
+            android:padding="8dp">
 
             <include layout="@layout/item_step" android:id="@+id/step1" />
             <include layout="@layout/item_step" android:id="@+id/step2" />
             <include layout="@layout/item_step" android:id="@+id/step3" />
         </LinearLayout>
 
-        <!-- Security note -->
+        <!-- Security -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             android:background="@drawable/glass_card"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:padding="16dp">
+            android:padding="18dp">
 
             <ImageView
                 android:layout_width="26dp"
@@ -203,41 +193,42 @@
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:lineSpacingMultiplier="1.2"
                 android:text="@string/security_note"
                 android:textColor="@color/cream_muted"
-                android:textSize="12sp"
-                android:lineSpacingMultiplier="1.15" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/btnBankSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/btn_ghost"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
-            android:paddingVertical="14dp">
+            android:paddingVertical="15dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:letterSpacing="0.05"
                 android:text="@string/bank_settings"
-                android:textColor="@color/cream"
-                android:textSize="14sp" />
+                android:textColor="@color/cream_muted"
+                android:textSize="13sp" />
         </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="22dp"
+            android:alpha="0.65"
+            android:lineSpacingMultiplier="1.2"
             android:text="@string/disclaimer"
             android:textColor="@color/cream_muted"
-            android:textSize="11sp"
-            android:alpha="0.8"
-            android:lineSpacingMultiplier="1.15" />
+            android:textSize="10sp" />
     </LinearLayout>
 </ScrollView>

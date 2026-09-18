@@ -10,7 +10,7 @@
     <string name="scan_and_pay">Scan &amp; Pay</string>
     <string name="enter_manually">Enter UPI ID or number</string>
 
-    <string name="how_title">How it works</string>
+    <string name="how_title">HOW IT WORKS</string>
     <string name="security_note">Your UPI PIN is never seen or stored by UrgentPay. At the moment it\'s needed, we hand off to your phone\'s secure NPCI screen — the only place a UPI PIN should ever be typed.</string>
 
     <string name="disclaimer">UrgentPay is an independent utility. It is not affiliated with, endorsed by, or connected to NPCI, UPI, BHIM, or any bank. Payments are completed by your bank over the *99# / IVR telecom rails. Availability depends on your bank and SIM — no app can guarantee a transfer.</string>
@@ -35,14 +35,14 @@
     <!-- Pre-filled dialling -->
     <string name="ready_to_pay">Ready to pay</string>
     <string name="only_pin_left">Everything is filled in — only your UPI PIN is left.</string>
-    <string name="paste_then_pin">Paste the UPI ID once, then your PIN. The menus are skipped.</string>
+    <string name="paste_then_pin">Menus skipped. Paste the UPI ID when asked, then your PIN.</string>
     <string name="answer_remaining">The menus are skipped — answer what\'s left.</string>
     <string name="prefilled_code">What UPay will dial</string>
     <string name="start_payment">Start payment</string>
     <string name="pin_on_ussd">Your UPI PIN is typed on your phone\'s own *99# screen, never in UPay. The app only dials — it cannot see your PIN.</string>
 
     <string name="copied_for_paste">UPI ID copied</string>
-    <string name="paste_hint">When your bank asks “Enter UPI ID”, long-press the box and tap Paste.</string>
+    <string name="paste_hint">Your bank will ask “Enter UPI ID”. Long-press that box and tap Paste.\n\nUPay can\'t type it for you: Android strips the “@” out of anything it dials, so a UPI ID sent that way arrives at the bank broken.</string>
     <string name="copy_again">Copy again</string>
     <string name="copied">Copied</string>
 
@@ -81,7 +81,13 @@
     <string name="not_upi_qr">No UPI ID in that code</string>
     <string name="not_upi_qr_detail">UPay read the QR but couldn\'t find a payable UPI ID in it. Here\'s what it contained:\n\n%1$s</string>
     <string name="scan_again">Scan again</string>
-    <string name="trying_full_auto">Sending the UPI ID with the request…</string>
-    <string name="full_auto_worked">Sent — your bank should now ask only for the PIN.</string>
-    <string name="retrying_via_dialler">Trying again through the dialler…</string>
+    <string name="scan_any_qr">SCAN ANY UPI QR</string>
+    <string name="works_offline">works offline</string>
+    <string name="type_upi_id_instead">Type a UPI ID instead</string>
+    <string name="no_torch">No flash on this camera.</string>
+    <string name="no_qr_in_image">No QR code found in that picture.</string>
+    <string name="image_unreadable">Couldn\'t open that image.</string>
+    <string name="hero_line">Pay when the\ninternet won\'t.</string>
+    <string name="no_internet_needed">NO INTERNET NEEDED</string>
+    <string name="scan_and_pay_sub">any UPI QR, offline</string>
 </resources>

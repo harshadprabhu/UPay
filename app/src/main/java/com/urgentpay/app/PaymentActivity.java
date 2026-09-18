@@ -36,8 +36,15 @@ public class PaymentActivity extends AppCompatActivity {
         TextView tvVpa = findViewById(R.id.tvPayeeVpa);
         etAmount = findViewById(R.id.etAmount);
 
-        tvName.setText(TextUtils.isEmpty(name) ? vpa : name);
-        tvVpa.setText(vpa);
+        // When the QR carried no payee name the address is already the headline;
+        // repeating it underneath just reads as a rendering bug.
+        if (TextUtils.isEmpty(name)) {
+            tvName.setText(vpa);
+            tvVpa.setVisibility(android.view.View.GONE);
+        } else {
+            tvName.setText(name);
+            tvVpa.setText(vpa);
+        }
         if (!TextUtils.isEmpty(amount)) {
             etAmount.setText(amount);
         }

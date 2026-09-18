@@ -88,12 +88,11 @@ public class UssdSessionActivity extends AppCompatActivity {
     }
 
     /**
-     * Starts the payment.
+     * Starts the payment by dialling the prepared string.
      *
-     * For a UPI ID we first try {@code sendUssdRequest}, which takes the string
-     * as-is and so can carry the '@' that a {@code tel:} URI would strip. If the
-     * network or device rejects it we fall back to dialling the numeric prefix
-     * and pasting the address — so the attempt can only ever help.
+     * A payment to a mobile number is carried complete. A payment to a UPI ID is
+     * dialled only to the "Enter UPI ID" prompt, because Android strips the
+     * address out of a dial string (see {@link UssdCode#build}).
      */
     private void placeCall() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
@@ -103,52 +102,7 @@ public class UssdSessionActivity extends AppCompatActivity {
             return;
         }
 
-        boolean alphanumeric = dial.fullCode != null && !dial.fullCode.equals(dial.code);
-        if (alphanumeric && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (trySendUssd(dial.fullCode)) return;
-        }
-
         dialCode(dial.code);
-    }
-
-    /**
-     * @return true if the request was accepted for sending; false if we should
-     *         fall back immediately.
-     */
-    @RequiresApi(Build.VERSION_CODES.O)
-    private boolean trySendUssd(String fullCode) {
-        TelephonyManager tm = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-        if (tm == null) return false;
-
-        setStatus(getString(R.string.trying_full_auto));
-        try {
-            tm.sendUssdRequest(fullCode, new TelephonyManager.UssdResponseCallback() {
-                @Override
-                public void onReceiveUssdResponse(TelephonyManager t, String request,
-                                                  CharSequence response) {
-                    // The network took the whole string; its reply (normally the
-                    // UPI PIN prompt) is now on screen.
-                    setStatus(getString(R.string.full_auto_worked));
-                }
-
-                @Override
-                public void onReceiveUssdResponseFailed(TelephonyManager t, String request,
-                                                        int failureCode) {
-                    // Second attempt: dial the same full string. The telephony
-                    // stack forwards a long '#'-terminated string as a raw USSD
-                    // request, which can succeed where the request API refused.
-                    setStatus(getString(R.string.retrying_via_dialler));
-                    dialCode(dial.fullCode);
-                }
-            }, new Handler(Looper.getMainLooper()));
-            return true;
-        } catch (SecurityException | IllegalArgumentException e) {
-            return false;
-        }
-    }
-
-    private void setStatus(String text) {
-        runOnUiThread(() -> ((TextView) findViewById(R.id.tvWhatsLeft)).setText(text));
     }
 
     /**
