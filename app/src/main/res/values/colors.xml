@@ -1,0 +1,18 @@
+<resources>
+    <!-- Copper on Cocoa palette -->
+    <color name="cocoa_900">#201512</color>
+    <color name="cocoa_800">#2C1D18</color>
+    <color name="cocoa_700">#3A2822</color>
+    <color name="copper">#D98E4A</color>
+    <color name="copper_light">#F0B77E</color>
+    <color name="copper_dark">#B4702F</color>
+    <color name="cream">#F6ECE3</color>
+    <color name="cream_muted">#C9B3A6</color>
+    <color name="glass_fill">#22FFFFFF</color>
+    <color name="glass_fill_strong">#33FFFFFF</color>
+    <color name="glass_stroke">#40FFFFFF</color>
+    <color name="scrim">#66000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="success">#7BC47F</color>
+    <color name="danger">#E38B7B</color>
+</resources>

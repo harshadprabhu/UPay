@@ -1,0 +1,57 @@
+<resources>
+    <string name="app_name">UrgentPay</string>
+    <string name="app_short">UPay</string>
+    <string name="tagline">Pay when the internet won\'t</string>
+    <string name="offline_ready">Offline</string>
+
+    <string name="hero_title">Emergency offline UPI</string>
+    <string name="hero_sub">No data, no signup. Scan any UPI QR and pay over the *99# mobile-network rail — the bank menu shown here as clean steps, not a raw dialer screen.</string>
+
+    <string name="scan_and_pay">Scan &amp; Pay</string>
+    <string name="enter_manually">Enter UPI ID or number</string>
+
+    <string name="how_title">How it works</string>
+    <string name="security_note">Your UPI PIN is never seen or stored by UrgentPay. At the moment it\'s needed, we hand off to your phone\'s secure NPCI screen — the only place a UPI PIN should ever be typed.</string>
+
+    <string name="disclaimer">UrgentPay is an independent utility. It is not affiliated with, endorsed by, or connected to NPCI, UPI, BHIM, or any bank. Payments are completed by your bank over the *99# / IVR telecom rails. Availability depends on your bank and SIM — no app can guarantee a transfer.</string>
+
+    <!-- Steps -->
+    <string name="step1_title">Scan the UPI QR</string>
+    <string name="step1_desc">Works fully offline. We read the recipient\'s UPI ID and amount from the code — no typing.</string>
+    <string name="step2_title">Confirm in clean UI</string>
+    <string name="step2_desc">Check who you\'re paying and the amount. We run *99# in the background and show the bank\'s reply here.</string>
+    <string name="step3_title">Approve with your PIN</string>
+    <string name="step3_desc">The secure NPCI PIN screen opens for the final approval. Done — no internet used at any step.</string>
+
+    <!-- Payment screen -->
+    <string name="confirm_payment">Confirm payment</string>
+    <string name="paying_to">Paying to</string>
+    <string name="amount_inr">Amount (INR)</string>
+    <string name="pin_handoff">For the final approval, your bank\'s secure UPI PIN screen opens. UrgentPay never handles your PIN.</string>
+    <string name="pay_via_ussd">Pay via *99# (offline)</string>
+    <string name="pay_via_ivr">Or pay by IVR call (123PAY)</string>
+    <string name="verify_recipient">Always verify the recipient before approving. Sending money cannot be undone.</string>
+
+    <!-- USSD session -->
+    <string name="offline_session">Offline session</string>
+    <string name="ussd_starting">Connecting over mobile network…</string>
+    <string name="ussd_dialing">Running *99# …</string>
+    <string name="reply_hint">Type your menu choice</string>
+    <string name="open_secure_dialer">Enter UPI PIN in secure dialer</string>
+    <string name="ussd_unsupported">This device can\'t run *99# inside the app. Opening the secure dialer with *99# instead.</string>
+    <string name="ussd_failed">The mobile network ended the session. You can retry from the secure dialer.</string>
+
+    <!-- Manual entry -->
+    <string name="manual_title">Enter recipient</string>
+    <string name="manual_vpa_hint">UPI ID (name@bank) or mobile number</string>
+    <string name="manual_continue">Continue</string>
+    <string name="invalid_vpa">Enter a valid UPI ID or 10-digit mobile number.</string>
+
+    <!-- Misc -->
+    <string name="ivr_number">08045163666</string>
+    <string name="ussd_code">*99#</string>
+    <string name="perm_needed">Phone permission is needed to run the offline payment rail. You can also use the secure dialer.</string>
+    <string name="no_dialer">No phone dialer found on this device.</string>
+    <string name="scan_prompt">Point at a UPI QR code</string>
+    <string name="not_upi_qr">That doesn\'t look like a UPI QR code.</string>
+</resources>

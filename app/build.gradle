@@ -1,0 +1,60 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.urgentpay.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.urgentpay.app"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    signingConfigs {
+        release {
+            // For local/demo release builds. Point these at your own keystore
+            // (or CI secrets) for a production release. Never commit a real one.
+            def ksPath = System.getenv("UPAY_KEYSTORE") ?: "${rootDir}/upay-release.jks"
+            def ks = file(ksPath)
+            if (ks.exists()) {
+                storeFile ks
+                storePassword System.getenv("UPAY_STORE_PASSWORD") ?: "upay12345"
+                keyAlias System.getenv("UPAY_KEY_ALIAS") ?: "upay"
+                keyPassword System.getenv("UPAY_KEY_PASSWORD") ?: "upay12345"
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            def ks = file(System.getenv("UPAY_KEYSTORE") ?: "${rootDir}/upay-release.jks")
+            if (ks.exists()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    // Offline QR scanning (bundles ZXing core; no network / no Play Services).
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+}

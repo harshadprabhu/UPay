@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base warm cocoa gradient -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="@color/cocoa_700"
+                android:centerColor="@color/cocoa_800"
+                android:endColor="@color/cocoa_900" />
+        </shape>
+    </item>
+    <!-- Soft copper glow, top-right -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="620"
+                android:centerX="0.85"
+                android:centerY="0.06"
+                android:startColor="#66D98E4A"
+                android:endColor="#00D98E4A" />
+        </shape>
+    </item>
+    <!-- Faint copper glow, bottom-left for depth -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="radial"
+                android:gradientRadius="520"
+                android:centerX="0.05"
+                android:centerY="0.95"
+                android:startColor="#33B4702F"
+                android:endColor="#00B4702F" />
+        </shape>
+    </item>
+</layer-list>
