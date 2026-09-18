@@ -48,7 +48,7 @@
 
     <!-- Bank menu settings -->
     <string name="bank_menu_title">Bank menu numbers</string>
-    <string name="bank_menu_body">UPay skips the menus by dialling their numbers directly. Banks number them differently — if a payment lands in the wrong menu, correct the numbers here from your own *99# screen.</string>
+    <string name="bank_menu_body">These follow NPCI’s standard *99# menu, which is the same at every bank — the defaults should just work. They are here only in case an issuer or language pack ever reorders them.</string>
     <string name="opt_send_money">“Send Money” is option…</string>
     <string name="opt_by_mobile">“Mobile No.” is option…</string>
     <string name="opt_by_upi_id">“UPI ID” is option…</string>
@@ -83,5 +83,5 @@
     <string name="scan_again">Scan again</string>
     <string name="trying_full_auto">Sending the UPI ID with the request…</string>
     <string name="full_auto_worked">Sent — your bank should now ask only for the PIN.</string>
-    <string name="full_auto_fell_back">Your network wouldn\'t take the UPI ID inline — paste it instead.</string>
+    <string name="retrying_via_dialler">Trying again through the dialler…</string>
 </resources>

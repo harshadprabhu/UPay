@@ -16,18 +16,24 @@ import android.text.TextUtils;
  * means: Send Money (1) → by Mobile No. (1) → that number → that amount →
  * skip the remark (1). The only thing left on screen is the UPI PIN box.
  *
- * <h3>Why the option numbers are configurable</h3>
- * They are not the same at every bank. One real HDFC menu reads
- * {@code 1. Mobile No. / 3. UPI ID / 4. Saved Beneficiary / 5. IFSC, A/C No.} —
- * note that it skips 2 entirely. Hard-coding those digits would silently send
- * money down the wrong menu branch at another bank, so they are stored as
- * preferences the user can correct from Settings.
+ * <h3>The option numbers are an NPCI standard, not a per-bank setting</h3>
+ * {@code *99#} is a single NPCI platform (NUUP) that every member bank sits
+ * behind — the bank name shown at the top of the menu is cosmetic. The public
+ * NUUP specification documents the tree as
+ * {@code 1 Send Money → 1.1 Mobile No. / 1.3 UPI ID / 1.4 Saved Beneficiary /
+ * 1.5 IFSC+Account}, and the gap at 1.2 is a retired option ("Mobile Number &
+ * MMID"), not a quirk of one bank.
+ *
+ * The digits are still exposed in Settings as an escape hatch, in case a
+ * particular issuer or language pack ever reorders them, but the defaults are
+ * expected to be correct everywhere.
  *
  * <h3>UPI IDs</h3>
- * A UPI ID contains {@code @}, {@code .} and {@code -}, which are not reliably
- * carried by a USSD dial string. Rather than risk a malformed request, a
- * payment to a UPI ID is dialled only as deep as the "Enter UPI ID" prompt and
- * the address is placed on the clipboard for a one-tap paste.
+ * The specification lists {@code *99*1*3*VPA*AMOUNT*REMARKS#} as a valid direct
+ * string, so a UPI ID can be supplied inline. What is not guaranteed is that
+ * the {@code @} survives the trip through Android's dialler, so the caller
+ * tries the request API first and keeps the address on the clipboard as a
+ * manual last resort.
  */
 public class UssdCode {
 
@@ -37,7 +43,7 @@ public class UssdCode {
     private static final String KEY_BY_MOBILE = "opt_by_mobile";
     private static final String KEY_BY_UPI_ID = "opt_by_upi_id";
 
-    // Defaults observed on a live HDFC *99# menu.
+    // Per the NUUP specification; the same on every member bank.
     private static final String DEF_SEND_MONEY = "1";
     private static final String DEF_BY_MOBILE = "1";
     private static final String DEF_BY_UPI_ID = "3";
@@ -112,12 +118,11 @@ public class UssdCode {
             return new Dial(code, code, null, !TextUtils.isEmpty(amt));
         }
 
-        // A UPI ID contains '@', '.' and '-'. PhoneNumberUtils drops characters
-        // it considers undialable, so routing this through a tel: URI would
-        // silently mangle the address — with real money attached. Two routes:
-        //   1. sendUssdRequest, which takes the string directly and may carry it;
-        //   2. failing that, dial only as far as the "Enter UPI ID" prompt and
-        //      paste the address from the clipboard.
+        // Per the NUUP spec this is a valid direct string:
+        //     *99*1*3*VPA*AMOUNT*REMARKS#
+        // The open question is only whether the '@' survives Android's dialler,
+        // so `prefix` stays available as the shallow fallback that stops at the
+        // "Enter UPI ID" prompt.
         String prefix = "*99*" + sendMoney + "*" + byUpiId + "#";
         String full = "*99*" + sendMoney + "*" + byUpiId + "*" + p;
         if (!TextUtils.isEmpty(amt)) {
@@ -131,8 +136,4 @@ public class UssdCode {
         return s != null && s.trim().matches("^[6-9]\\d{9}$");
     }
 
-    /** Percent-encodes '#' so the dialler keeps it instead of treating it as a fragment. */
-    public static String toTelUri(String code) {
-        return "tel:" + code.replace("#", "%23");
-    }
 }

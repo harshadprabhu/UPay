@@ -134,9 +134,11 @@ public class UssdSessionActivity extends AppCompatActivity {
                 @Override
                 public void onReceiveUssdResponseFailed(TelephonyManager t, String request,
                                                         int failureCode) {
-                    // Expected on networks that won't carry a UPI ID inline.
-                    setStatus(getString(R.string.full_auto_fell_back));
-                    dialCode(dial.code);
+                    // Second attempt: dial the same full string. The telephony
+                    // stack forwards a long '#'-terminated string as a raw USSD
+                    // request, which can succeed where the request API refused.
+                    setStatus(getString(R.string.retrying_via_dialler));
+                    dialCode(dial.fullCode);
                 }
             }, new Handler(Looper.getMainLooper()));
             return true;
@@ -149,8 +151,13 @@ public class UssdSessionActivity extends AppCompatActivity {
         runOnUiThread(() -> ((TextView) findViewById(R.id.tvWhatsLeft)).setText(text));
     }
 
+    /**
+     * Uri.fromParts builds an opaque tel: URI, so the string is carried
+     * verbatim. Uri.parse would treat everything after '#' as a fragment and
+     * drop it, which for a USSD code means losing the terminator.
+     */
     private void dialCode(String code) {
-        Uri uri = Uri.parse(UssdCode.toTelUri(code));
+        Uri uri = Uri.fromParts("tel", code, null);
         try {
             startActivity(new Intent(Intent.ACTION_CALL, uri));
         } catch (SecurityException | android.content.ActivityNotFoundException e) {
@@ -176,7 +183,7 @@ public class UssdSessionActivity extends AppCompatActivity {
                 placeCall();
             } else {
                 // Not a dead end — the dialler route still works.
-                openDialer(Uri.parse(UssdCode.toTelUri(dial.code)));
+                openDialer(Uri.fromParts("tel", dial.code, null));
             }
         }
     }
